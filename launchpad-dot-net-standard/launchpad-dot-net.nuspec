@@ -4,14 +4,14 @@
     <id>launchpad-dot-net</id>
     <version>1.0.0</version>
     <title>Launchpad DotNet</title>
-    <authors>Athene Allen, iUltimateLP</authors>
-    <owners>Athene Allen, iUltimateLP</owners>
+    <authors>Athene Allen, iUltimateLP, pstaszko</authors>
+    <owners>Athene Allen, iUltimateLP, pstaszko</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
     <projectUrl>https://github.com/gnargle/launchpad-dot-net/</projectUrl>
-    <description>An extension of iUltimateLP's Launchpad DotNet library that adds support for the Launchpad Mini Mk3 and enables SysEx support.</description>
-    <releaseNotes>Initial release</releaseNotes>
-    <copyright>Copyright 2020</copyright>
+    <description>An extension of iUltimateLP's Launchpad DotNet library that adds support for the Launchpad Mini Mk3 and enables SysEx support. Ported to dotnet standard by pstaszko.</description>
+    <releaseNotes>Ported to dotnet standard.</releaseNotes>
+    <copyright>Copyright 2024</copyright>
     <tags>launchpad, novation, midi, launchpad dotnet, music</tags>
     <dependencies>
       <dependency id="midi-dot-net2" version="2.0.1" />

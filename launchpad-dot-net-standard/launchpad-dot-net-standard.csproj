@@ -5,15 +5,18 @@
   </PropertyGroup>
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <PackageId>pstaszko.launchpad-dot-net-standard</PackageId>
-    <Title>launchpad-dot-net-standard</Title>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <PackageId>launchpad-dot-net</PackageId>
+    <title>Launchpad DotNet</title>
+    <version>2.0.0</version>
+    <authors>Athene Allen, iUltimateLP, pstaszko</authors>
     <Description>
-      Rebundle of launchpad-dot-net
+      An extension of iUltimateLP's Launchpad DotNet library that adds support for the Launchpad Mini Mk3 and enables SysEx support. Ported to dotnet standard by pstaszko.
     </Description>
+    <PackageTags>launchpad, novation, midi, launchpad dotnet, music</PackageTags>
     <RepositoryUrl>
+      https://github.com/gnargle/launchpad-dot-net/
     </RepositoryUrl>
-    <!--<PackageReadmeFile>README.md</PackageReadmeFile>-->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="midi-dot-net2" Version="2.0.1" />
