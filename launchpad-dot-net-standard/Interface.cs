@@ -26,15 +26,16 @@ namespace LaunchpadNET
             this.outInfo = outInfo;
             this.outWarn = outWarn;
         }
-        private Pitch[,] notes = new Pitch[8, 8] {
-            { Pitch.A5, Pitch.ASharp5, Pitch.B5, Pitch.C6, Pitch.CSharp6, Pitch.D6, Pitch.DSharp6, Pitch.E6 },
-            { Pitch.B4, Pitch.C5, Pitch.CSharp5, Pitch.D5, Pitch.DSharp5, Pitch.E5, Pitch.F5, Pitch.FSharp5 },
-            { Pitch.CSharp4, Pitch.D4, Pitch.DSharp4, Pitch.E4, Pitch.F4, Pitch.FSharp4, Pitch.G4, Pitch.GSharp4 },
-            { Pitch.DSharp3, Pitch.E3, Pitch.F3, Pitch.FSharp3, Pitch.G3, Pitch.GSharp3, Pitch.A3, Pitch.ASharp3 },
-            { Pitch.F2, Pitch.FSharp2, Pitch.G2, Pitch.GSharp2, Pitch.A2, Pitch.ASharp2, Pitch.B2, Pitch.C3 },
-            { Pitch.G1, Pitch.GSharp1, Pitch.A1, Pitch.ASharp1, Pitch.B1, Pitch.C2, Pitch.CSharp2, Pitch.D2 },
-            { Pitch.A0, Pitch.ASharp0, Pitch.B0, Pitch.C1, Pitch.CSharp1, Pitch.D1, Pitch.DSharp1, Pitch.E1 },
-            { Pitch.BNeg1, Pitch.C0, Pitch.CSharp0, Pitch.D0, Pitch.DSharp0, Pitch.E0, Pitch.F0, Pitch.FSharp0 }
+        private Pitch[,] notes = new Pitch[9, 9] {
+            { Pitch.G6, Pitch.GSharp6, Pitch.A6, Pitch.ASharp6, Pitch.B6, Pitch.C7, Pitch.CSharp7, Pitch.D7, Pitch.DSharp7 },
+            { Pitch.A5, Pitch.ASharp5, Pitch.B5, Pitch.C6, Pitch.CSharp6, Pitch.D6, Pitch.DSharp6, Pitch.E6, Pitch.F6 },
+            { Pitch.B4, Pitch.C5, Pitch.CSharp5, Pitch.D5, Pitch.DSharp5, Pitch.E5, Pitch.F5, Pitch.FSharp5, Pitch.G5 },
+            { Pitch.CSharp4, Pitch.D4, Pitch.DSharp4, Pitch.E4, Pitch.F4, Pitch.FSharp4, Pitch.G4, Pitch.GSharp4, Pitch.A4 },
+            { Pitch.DSharp3, Pitch.E3, Pitch.F3, Pitch.FSharp3, Pitch.G3, Pitch.GSharp3, Pitch.A3, Pitch.ASharp3, Pitch.B3 },
+            { Pitch.F2, Pitch.FSharp2, Pitch.G2, Pitch.GSharp2, Pitch.A2, Pitch.ASharp2, Pitch.B2, Pitch.C3, Pitch.CSharp3 },
+            { Pitch.G1, Pitch.GSharp1, Pitch.A1, Pitch.ASharp1, Pitch.B1, Pitch.C2, Pitch.CSharp2, Pitch.D2, Pitch.DSharp2 },
+            { Pitch.A0, Pitch.ASharp0, Pitch.B0, Pitch.C1, Pitch.CSharp1, Pitch.D1, Pitch.DSharp1, Pitch.E1, Pitch.F1 },
+            { Pitch.BNeg1, Pitch.C0, Pitch.CSharp0, Pitch.D0, Pitch.DSharp0, Pitch.E0, Pitch.F0, Pitch.FSharp0, Pitch.G0 }
         };
 
         private Pitch[] rightLEDnotes = new Pitch[] {
@@ -353,37 +354,7 @@ namespace LaunchpadNET
 
         public void clearAllLEDs()
         {
-            //massUpdateLEDsRectangle(0, 0, 7, 7, 0);
-
-            //if (IsLegacy)
-            //{
-            //	for (int ry = 0; ry < 8; ry++)
-            //	{
-            //		setSideLED(ry, 0);
-            //	}
-            //	for (int tx = 1; tx < 9; tx++)
-            //	{
-            //		setTopLEDs(tx, 0);
-            //	}
-            //}
-            //else
-            //{
-            //	foreach (SideLEDs side in Enum.GetValues(typeof(SideLEDs)))
-            //	{
-            //		setSideLED(side, 0);
-            //	}
-            //	foreach (TopLEDs top in Enum.GetValues(typeof(TopLEDs)))
-            //	{
-            //		setTopLED(top, 0);
-            //	}
-            //}
-            for (int x = 0; x < 9; x++)
-            {
-                for (int y = 0; y < 9; y++)
-                {
-                    MySetLED(x, y, 0, 0, 0);
-                }
-            }
+            massUpdateLEDsRectangle(0, 0, 8, 8, 0);           
         }
 
         /// <summary>
@@ -455,6 +426,12 @@ namespace LaunchpadNET
         {
             targetOutput.SendNoteOn(Channel.Channel1, (Pitch)led, velo);
         }
+
+        public void setTopLED(TopLEDs led, int r, int g, int b)
+        {
+            var retx = GetBytesToSend(r, g, b, (int)led);
+            DoASend(retx);
+        }
         public void setTopLEDFlash(TopLEDs led, int velo)
         {
             targetOutput.SendNoteOn(Channel.Channel2, (Pitch)led, velo);
@@ -499,6 +476,12 @@ namespace LaunchpadNET
             targetOutput.SendNoteOn(Channel.Channel1, (Pitch)led, velo);
         }
 
+        public void setSideLED(SideLEDs led, int r, int g, int b)
+        {
+            var retx = GetBytesToSend(r, g, b, (int)led);
+            DoASend(retx);
+        }
+
         public void setSideLEDFlash(int y, int velo)
         {
             targetOutput.SendNoteOn(Channel.Channel2, rightLEDnotes[y], velo);
@@ -534,8 +517,6 @@ namespace LaunchpadNET
             DoASend(sendbytes.ToArray());
         }
 
-        public void MySetLED(int x, int y, int r, int g, int b) => DoASend(GetBytesToSend(r, g, b, x, y));
-
         private void DoASend(byte[] bytes)
         {
             var sendbytes = HeaderBytes;
@@ -553,27 +534,15 @@ namespace LaunchpadNET
             var note = GetNoteFromCoords(x, y);
             return (new byte[] { (byte)LightingMode.RGB, (byte)note, (byte)r, (byte)g, (byte)b }).ToArray();
         }
+        private byte[] GetBytesToSend(int r, int g, int b, int note)
+        {
+            return (new byte[] { (byte)LightingMode.RGB, (byte)note, (byte)r, (byte)g, (byte)b }).ToArray();
+        }
+
 
         private Pitch GetNoteFromCoords(int x, int y)
         {
-            Pitch note;
-            if (x == 8 && y == 0)
-            {
-                note = topLEDNotes[8]; //logo is in the top list, special case
-            }
-            else if (x == 8)
-            {
-                note = rightLEDnotes[y - 1];
-            }
-            else if (y == 0)
-            {
-                note = topLEDNotes[x];
-            }
-            else
-            {
-                note = ledToMidiNote(x, y - 1);
-            }
-            return note;
+            return ledToMidiNote(x, y);
         }
 
         public void massUpdateLEDsRectangle(int startX, int startY, int endX, int endY, int velo, int velo2 = 0, int velo3 = 0)
@@ -607,6 +576,12 @@ namespace LaunchpadNET
             {
                 outError($"<< LAUNCHPAD.NET >> {nameof(Interface.setLED)} Midi.DeviceException {ex.Message}");
             }
+        }
+
+        public void setLED(int x, int y, int r, int g, int b)
+        {
+            var retx = GetBytesToSend(r, g, b, x, y);
+            DoASend(retx);
         }
 
         public void setLEDFlash(int x, int y, int velo)
