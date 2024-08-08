@@ -1,4 +1,6 @@
-﻿var logAction = delegate (string name)
+﻿using static LaunchpadNET.Interface;
+
+var logAction = delegate (string name)
 {
     Console.WriteLine(name);
 };
@@ -85,6 +87,12 @@ try
             lp.massUpdateLEDsRectangle(0, 0, 8, 8, 125);
             Console.WriteLine("Press enter to continue");
             Console.ReadLine();
+
+            lp.clearAllLEDs();
+            Console.WriteLine("Press a key to activate it");
+            lp.OnLaunchpadKeyDown += KeyPressed;
+            Console.WriteLine("Press enter to continue");
+            Console.ReadLine();
         }
         finally
         {
@@ -100,4 +108,10 @@ try
 catch (Exception ex)
 {
     Console.WriteLine("Failed to retrieve and connect to launchpads with error: " + ex.Message);
+}
+
+void KeyPressed(object source, LaunchpadKeyEventArgs e)
+{
+    logAction($"launchpad button x:{e.GetX()}, y:{e.GetY()} fired");
+    lp.setLED(e.GetX(), e.GetY(), 125);
 }

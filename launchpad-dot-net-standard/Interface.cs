@@ -308,6 +308,20 @@ namespace LaunchpadNET
             {
                 OnLaunchpadCCKeyUp(this, new LaunchpadCCKeyEventArgs((int)ccMsg.Control));
             }
+            var coords = midiNoteToLed((Pitch)ccMsg.Control);
+            LaunchpadKeyEventArgs z() => new LaunchpadKeyEventArgs(coords[0], coords[1]);
+            if (OnLaunchpadKeyPressed != null)
+            {
+                OnLaunchpadKeyPressed(this, z());
+            }
+            if (OnLaunchpadKeyUp != null && ccMsg.Value == 0)
+            {
+                OnLaunchpadKeyUp(this, z());
+            }
+            if (OnLaunchpadKeyDown != null && ccMsg.Value == 127)
+            {
+                OnLaunchpadKeyDown(this, z());
+            }
         }
 
         public int midiNoteToSideLED(Pitch p)
@@ -329,9 +343,9 @@ namespace LaunchpadNET
         /// <returns>The X,Y coordinates.</returns>
         public int[] midiNoteToLed(Pitch p)
         {
-            for (int x = 0; x <= 7; x++)
+            for (int x = 0; x <= 8; x++)
             {
-                for (int y = 0; y <= 7; y++)
+                for (int y = 0; y <= 8; y++)
                 {
                     if (notes[x, y] == p)
                     {
