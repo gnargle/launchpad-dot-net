@@ -7,7 +7,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>launchpad-dot-net</PackageId>
     <title>Launchpad DotNet</title>
-    <version>2.2.0</version>
+    <version>2.2.3</version>
     <authors>Athene Allen, iUltimateLP, pstaszko</authors>
     <Description>
       An extension of iUltimateLP's Launchpad DotNet library that adds support for the Launchpad Mini Mk3 and enables SysEx support. Ported to dotnet standard by pstaszko.
