@@ -677,10 +677,7 @@ namespace LaunchpadNET
         /// <returns>Returns LaunchpadDevice array.</returns>
         public static LaunchpadDevice[] getConnectedLaunchpads(Action<string> outInfo)
         {
-            //unsurprisingly, this is still windows only, it needs WinMM.dll
-            //Making MIDI work in c# on linux is outside the scope of this project.
             List<LaunchpadDevice> tempDevices = new List<LaunchpadDevice>();
-            //legacy search.
 
             var a = OutputDevice.GetAll().ToList();
             var b = InputDevice.GetAll().ToList();
