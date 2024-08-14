@@ -1,9 +1,9 @@
-using Midi.Devices;
-using Midi.Enums;
-using Midi.Messages;
 using System;
+using Melanchall.DryWetMidi.Multimedia;
+using Melanchall.DryWetMidi.Core;
 using System.Collections.Generic;
 using System.Linq;
+using Melanchall.DryWetMidi.Common;
 
 namespace LaunchpadNET
 {
@@ -174,7 +174,7 @@ namespace LaunchpadNET
             _text = charList.ToArray();
             byte[] finalBytes = sysexHeader.Concat(finalArgs.Concat(_text.Concat(sysexStop))).ToArray();
 
-            targetOutput.SendSysEx(finalBytes);
+            targetOutput.SendEvent(new NormalSysExEvent(finalBytes));
         }
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace LaunchpadNET
             _text = charList.ToArray();
             byte[] finalBytes = sysexHeader.Concat(finalArgs.Concat(_text.Concat(sysexStop))).ToArray();
 
-            targetOutput.SendSysEx(finalBytes);
+            targetOutput.SendEvent(new NormalSysExEvent(finalBytes));
         }
         /// <summary>
         /// Creates a text scroll.
@@ -237,19 +237,19 @@ namespace LaunchpadNET
 
             byte[] finalBytes = sysexHeader.Concat(finalArgs.Concat(_text.Concat(sysexStop))).ToArray();
 
-            targetOutput.SendSysEx(finalBytes);
+            targetOutput.SendEvent(new NormalSysExEvent(finalBytes));
         }
 
         public void stopLoopingTextScroll()
         {
             byte[] stop = sysexHeader.Concat(new byte[] { 20, 247 }).ToArray();
-            targetOutput.SendSysEx(stop);
+            targetOutput.SendEvent(new NormalSysExEvent(stop));
         }
 
         public void stopLoopingTextScrollMiniMk3()
         {
             byte[] stop = sysexHeader.Concat(new byte[] { 7, 247 }).ToArray();
-            targetOutput.SendSysEx(stop);
+            targetOutput.SendEvent(new NormalSysExEvent(stop));
         }
         public Nullable<LaunchpadMode> ModeAsSet { get; set; }
         /// <summary>
@@ -261,64 +261,77 @@ namespace LaunchpadNET
         {
             ModeAsSet = mode;
             byte[] modeSet = sysexHeader.Concat(new byte[] { 14, (byte)mode, 247 }).ToArray();
-            targetOutput.SendSysEx(modeSet);
+            targetOutput.SendEvent(new NormalSysExEvent(modeSet));
         }
 
-        private void sysExAnswer(SysExMessage m)
+        private void sysExAnswer(SysExEvent m)
         {
             byte[] msg = m.Data;
             byte[] stopBytes = sysexHeader.Concat(new byte[] { 21, 247 }).ToArray();
         }
 
-        private void midiPress(NoteOnMessage msg)
+        private void midiPress(object sender, MidiEventReceivedEventArgs msg)
         {
-            if (!rightLEDnotes.Contains(msg.Pitch))
+            var evt = msg.Event;
+            if (evt.EventType == MidiEventType.ControlChange)
             {
-                LaunchpadKeyEventArgs z() => new LaunchpadKeyEventArgs(midiNoteToLed(msg.Pitch)[0], midiNoteToLed(msg.Pitch)[1]);
-                if (OnLaunchpadKeyPressed != null)
-                {
-                    OnLaunchpadKeyPressed(this, z());
-                }
-                if (OnLaunchpadKeyUp != null && msg.Velocity == 0)
-                {
-                    OnLaunchpadKeyUp(this, z());
-                }
-                if (OnLaunchpadKeyDown != null && msg.Velocity == 127)
-                {
-                    OnLaunchpadKeyDown(this, z());
-                }
-            }
-            else if (OnLaunchpadKeyPressed != null && rightLEDnotes.Contains(msg.Pitch))
+                controlChangePress(sender, msg);
+            } else
             {
-                OnLaunchpadCCKeyPressed(this, new LaunchpadCCKeyEventArgs(midiNoteToSideLED(msg.Pitch)));
+                if (evt.EventType == MidiEventType.NoteOn)
+                {
+                    var noteevt = (NoteOnEvent)evt;
+                    if (!rightLEDnotes.Contains((Pitch)(int)noteevt.NoteNumber))
+                    {                        
+                        var coords = midiNoteToLed((Pitch)(int)noteevt.NoteNumber);
+                        LaunchpadKeyEventArgs z() => new LaunchpadKeyEventArgs(coords[0], coords[1]);
+                        if (OnLaunchpadKeyPressed != null)
+                        {
+                            OnLaunchpadKeyPressed(this, z());
+                        }
+                        if (OnLaunchpadKeyUp != null && noteevt.Velocity == 0)
+                        {
+                            OnLaunchpadKeyUp(this, z());
+                        }
+                        if (OnLaunchpadKeyDown != null && noteevt.Velocity == 127)
+                        {
+                            OnLaunchpadKeyDown(this, z());
+                        }
+                    }
+                    else if (OnLaunchpadKeyPressed != null && rightLEDnotes.Contains((Pitch)(int)noteevt.NoteNumber))
+                    {
+                        OnLaunchpadCCKeyPressed(this, new LaunchpadCCKeyEventArgs(midiNoteToSideLED((Pitch)(int)noteevt.NoteNumber)));
+                    }
+                }
             }
         }
 
-        private void controlChangePress(ControlChangeMessage ccMsg)
+        private void controlChangePress(object sender, MidiEventReceivedEventArgs msg)
         {
-            if (OnLaunchpadCCKeyPressed != null)
+
+            var ccEvt = (ControlChangeEvent)msg.Event;
+
+
+            OnLaunchpadCCKeyPressed?.Invoke(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlValue));
+            if (OnLaunchpadCCKeyDown != null && ccEvt.Channel == 0)
             {
-                OnLaunchpadCCKeyPressed(this, new LaunchpadCCKeyEventArgs((int)ccMsg.Control));
+                OnLaunchpadCCKeyDown(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlValue));
             }
-            if (OnLaunchpadCCKeyDown != null && ccMsg.Value == 0)
+            if (OnLaunchpadCCKeyUp != null && ccEvt.Channel == 127)
             {
-                OnLaunchpadCCKeyDown(this, new LaunchpadCCKeyEventArgs((int)ccMsg.Control));
+                OnLaunchpadCCKeyUp(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlValue));
             }
-            if (OnLaunchpadCCKeyUp != null && ccMsg.Value == 127)
-            {
-                OnLaunchpadCCKeyUp(this, new LaunchpadCCKeyEventArgs((int)ccMsg.Control));
-            }
-            var coords = midiNoteToLed((Pitch)ccMsg.Control);
+            var coords = midiNoteToLed((Pitch)(int)ccEvt.ControlValue);
             LaunchpadKeyEventArgs z() => new LaunchpadKeyEventArgs(coords[0], coords[1]);
             if (OnLaunchpadKeyPressed != null)
             {
                 OnLaunchpadKeyPressed(this, z());
             }
-            if (OnLaunchpadKeyUp != null && ccMsg.Value == 0)
+            if (OnLaunchpadKeyUp != null && ccEvt.Channel == 0)
             {
                 OnLaunchpadKeyUp(this, z());
             }
-            if (OnLaunchpadKeyDown != null && ccMsg.Value == 127)
+            if (OnLaunchpadKeyDown != null && ccEvt.Channel == 127)
             {
                 OnLaunchpadKeyDown(this, z());
             }
@@ -433,12 +446,15 @@ namespace LaunchpadNET
         public void setTopLEDs(int x, int velo)
         {
             byte[] data = sysexHeader.Concat(new byte[] { 10, Convert.ToByte(103 + x), Convert.ToByte(velo), 247 }).ToArray();
-            targetOutput.SendSysEx(data);
+            targetOutput.SendEvent(new NormalSysExEvent(data));
         }
 
         public void setTopLED(TopLEDs led, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel1, (Pitch)led, velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)1
+            });
         }
 
         public void setTopLED(TopLEDs led, int r, int g, int b)
@@ -448,11 +464,17 @@ namespace LaunchpadNET
         }
         public void setTopLEDFlash(TopLEDs led, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel2, (Pitch)led, velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)2
+            });
         }
         public void setTopLEDPulse(TopLEDs led, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel3, (Pitch)led, velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)3
+            });
         }
 
         public void setClock(int bpm)
@@ -470,7 +492,7 @@ namespace LaunchpadNET
             byte[] data = sysexHeader.Concat(new byte[] { 248, 247 }).ToArray();
             for (int i = 0; i <= 10; i++)
             {
-                targetOutput.SendSysEx(data);
+                targetOutput.SendEvent(new NormalSysExEvent(data));
                 System.Threading.Thread.Sleep(timeDiff);
             }
         }
@@ -482,12 +504,18 @@ namespace LaunchpadNET
         /// <param name="velo">Velocity index.</param>
         public void setSideLED(int y, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel1, rightLEDnotes[y], velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)rightLEDnotes[y], (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)1
+            });
         }
 
         public void setSideLED(SideLEDs led, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel1, (Pitch)led, velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)1
+            });
         }
 
         public void setSideLED(SideLEDs led, int r, int g, int b)
@@ -498,20 +526,32 @@ namespace LaunchpadNET
 
         public void setSideLEDFlash(int y, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel2, rightLEDnotes[y], velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)rightLEDnotes[y], (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)2
+            });
         }
         public void setSideLEDFlash(SideLEDs led, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel2, (Pitch)led, velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)2
+            });
         }
 
         public void setSideLEDPulse(int y, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel3, rightLEDnotes[y], velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)rightLEDnotes[y], (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)3
+            });
         }
         public void setSideLEDPulse(SideLEDs led, int velo)
         {
-            targetOutput.SendNoteOn(Channel.Channel3, (Pitch)led, velo);
+            targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
+            {
+                Channel = (FourBitNumber)3
+            });
         }
 
         public void massUpdateLEDs(IEnumerable<int> xsx, IEnumerable<int> ysx, int red, int green = 0, int blue = 0)
@@ -539,7 +579,7 @@ namespace LaunchpadNET
             SendByte(sendbytes);
         }
 
-        private void SendByte(byte[] sendbytes) => targetOutput.SendSysEx(sendbytes);
+        private void SendByte(byte[] sendbytes) => targetOutput.SendEvent(new NormalSysExEvent(sendbytes));
 
         private byte[] HeaderBytes => sysexHeader.Concat(new byte[] { 3 }).ToArray();
 
@@ -584,9 +624,12 @@ namespace LaunchpadNET
         {
             try
             {
-                targetOutput.SendNoteOn(Channel.Channel1, notes[x, y], velo);
+                targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)notes[x, y], (SevenBitNumber)velo)
+                {
+                    Channel = (FourBitNumber)1
+                });
             }
-            catch (DeviceException ex)
+            catch (Exception ex)
             {
                 outError($"<< LAUNCHPAD.NET >> {nameof(Interface.setLED)} Midi.DeviceException {ex.Message}");
             }
@@ -602,9 +645,12 @@ namespace LaunchpadNET
         {
             try
             {
-                targetOutput.SendNoteOn(Channel.Channel2, notes[x, y], velo);
+                targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)notes[x, y], (SevenBitNumber)velo)
+                {
+                    Channel = (FourBitNumber)2
+                });
             }
-            catch (DeviceException ex)
+            catch (Exception ex)
             {
                 outError($"<< LAUNCHPAD.NET >> {nameof(Interface.setLEDFlash)} Midi.DeviceException {ex.Message}");
             }
@@ -614,9 +660,12 @@ namespace LaunchpadNET
         {
             try
             {
-                targetOutput.SendNoteOn(Channel.Channel3, notes[x, y], velo);
+                targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)notes[x, y], (SevenBitNumber)velo)
+                {
+                    Channel = (FourBitNumber)3
+                });
             }
-            catch (DeviceException ex)
+            catch (Exception ex)
             {
                 outError($"<< LAUNCHPAD.NET >> {nameof(Interface.setLEDPulse)} Midi.DeviceException {ex.Message}");
             }
@@ -632,17 +681,18 @@ namespace LaunchpadNET
             //Making MIDI work in c# on linux is outside the scope of this project.
             List<LaunchpadDevice> tempDevices = new List<LaunchpadDevice>();
             //legacy search.
-            var a = DeviceManager.OutputDevices.ToList();
-            var b = DeviceManager.InputDevices.ToList();
-            var namesO = DeviceManager.OutputDevices.Where(x => !x.Name.Contains("Synth")).Where(x => x.Name != "LPMiniMK3 MIDI").Select(x => x.Name).ToArray();
-            var namesI = DeviceManager.InputDevices.Where(x => !x.Name.Contains("Synth")).Where(x => x.Name != "LPMiniMK3 MIDI").Select(x => x.Name).ToArray();
+
+            var a = OutputDevice.GetAll().ToList();
+            var b = InputDevice.GetAll().ToList();
+            var namesO = OutputDevice.GetAll().Where(x => !x.Name.Contains("Synth")).Where(x => x.Name != "LPMiniMK3 MIDI").Select(x => x.Name).ToArray();
+            var namesI = InputDevice.GetAll().Where(x => !x.Name.Contains("Synth")).Where(x => x.Name != "LPMiniMK3 MIDI").Select(x => x.Name).ToArray();
 
             bool NewMethod()
             {
                 var alreadyO = tempDevices.Select(x => x._midiOut).ToArray();
                 var alreadyI = tempDevices.Select(x => x._midiIn).ToArray();
-                var outputDevices = DeviceManager.OutputDevices.Where(x => !alreadyO.Contains(x.Name)).ToArray();
-                var inputDevices = DeviceManager.InputDevices.Where(x => !alreadyI.Contains(x.Name)).ToArray();
+                var outputDevices = OutputDevice.GetAll().Where(x => !alreadyO.Contains(x.Name)).ToArray();
+                var inputDevices = InputDevice.GetAll().Where(x => !alreadyI.Contains(x.Name)).ToArray();
                 foreach (InputDevice id in inputDevices)
                 {
                     foreach (OutputDevice od in outputDevices)
@@ -717,26 +767,24 @@ namespace LaunchpadNET
                 sysexHeader = new byte[] { 240, 00, 32, 41, 2, 13 };
                 IsLegacy = false;
             }
-            foreach (InputDevice id in DeviceManager.InputDevices)
+            foreach (InputDevice id in InputDevice.GetAll())
             {
                 if (id.Name.ToLower() == inName)
                 {
                     targetInput = id;
-                    id.Open();
-                    targetInput.NoteOn += new NoteOnHandler(midiPress);
-                    targetInput.ControlChange += new ControlChangeHandler(controlChangePress);
-                    targetInput.StartReceiving(null);
+                    targetInput.EventReceived += midiPress;
+                    targetInput.StartEventsListening();
                 }
             }
-            foreach (OutputDevice od in DeviceManager.OutputDevices)
+            foreach (OutputDevice od in OutputDevice.GetAll())
             {
                 if (od.Name.ToLower() == outName)
                 {
                     targetOutput = od;
-                    od.Open();
+                    od.PrepareForEventsSending();
                 }
             }
-            Connected = targetInput.IsOpen && targetOutput.IsOpen;
+            Connected = targetInput.IsListeningForEvents && targetOutput.IsEnabled;
             return Connected;
         }
         /// <summary>
@@ -746,13 +794,13 @@ namespace LaunchpadNET
         /// <returns>Returns bool if disconnection was successful.</returns>
         public bool disconnect(LaunchpadDevice device)
         {
-            if (targetInput.IsOpen && targetOutput.IsOpen)
+            if (targetInput.IsListeningForEvents && targetOutput.IsEnabled)
             {
-                targetInput.StopReceiving();
-                targetInput.Close();
-                targetOutput.Close();
+                targetInput.StopEventsListening();
+                targetInput.Dispose();
+                targetOutput.Dispose();
             }
-            Connected = !targetInput.IsOpen && !targetOutput.IsOpen;
+            Connected = !targetInput.IsListeningForEvents && !targetOutput.IsEnabled;
             return Connected;
         }
 
