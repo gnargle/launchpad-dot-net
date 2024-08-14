@@ -757,14 +757,14 @@ namespace LaunchpadNET
             {
                 inName = device._midiName.ToLower();
                 outName = inName;
-                sysexHeader = new byte[] { 240, 00, 32, 41, 2, 24 };
+                sysexHeader = new byte[] { 00, 32, 41, 2, 24 };
                 IsLegacy = true;
             }
             else
             {
                 inName = device._midiIn.ToLower();
                 outName = device._midiOut.ToLower(); ;
-                sysexHeader = new byte[] { 240, 00, 32, 41, 2, 13 };
+                sysexHeader = new byte[] { 00, 32, 41, 2, 13 };
                 IsLegacy = false;
             }
             foreach (InputDevice id in InputDevice.GetAll())
