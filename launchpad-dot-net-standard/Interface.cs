@@ -312,26 +312,26 @@ namespace LaunchpadNET
             var ccEvt = (ControlChangeEvent)msg.Event;
 
 
-            OnLaunchpadCCKeyPressed?.Invoke(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlValue));
-            if (OnLaunchpadCCKeyDown != null && ccEvt.Channel == 0)
+            OnLaunchpadCCKeyPressed?.Invoke(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlNumber));
+            if (OnLaunchpadCCKeyDown != null && ccEvt.ControlValue == 0)
             {
-                OnLaunchpadCCKeyDown(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlValue));
+                OnLaunchpadCCKeyDown(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlNumber));
             }
-            if (OnLaunchpadCCKeyUp != null && ccEvt.Channel == 127)
+            if (OnLaunchpadCCKeyUp != null && ccEvt.ControlValue == 127)
             {
-                OnLaunchpadCCKeyUp(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlValue));
+                OnLaunchpadCCKeyUp(this, new LaunchpadCCKeyEventArgs((int)ccEvt.ControlNumber));
             }
-            var coords = midiNoteToLed((Pitch)(int)ccEvt.ControlValue);
+            var coords = midiNoteToLed((Pitch)(int)ccEvt.ControlNumber);
             LaunchpadKeyEventArgs z() => new LaunchpadKeyEventArgs(coords[0], coords[1]);
             if (OnLaunchpadKeyPressed != null)
             {
                 OnLaunchpadKeyPressed(this, z());
             }
-            if (OnLaunchpadKeyUp != null && ccEvt.Channel == 0)
+            if (OnLaunchpadKeyUp != null && ccEvt.ControlValue == 0)
             {
                 OnLaunchpadKeyUp(this, z());
             }
-            if (OnLaunchpadKeyDown != null && ccEvt.Channel == 127)
+            if (OnLaunchpadKeyDown != null && ccEvt.ControlValue == 127)
             {
                 OnLaunchpadKeyDown(this, z());
             }
@@ -453,7 +453,7 @@ namespace LaunchpadNET
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)1
+                Channel = (FourBitNumber)0
             });
         }
 
@@ -466,14 +466,14 @@ namespace LaunchpadNET
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)2
+                Channel = (FourBitNumber)1
             });
         }
         public void setTopLEDPulse(TopLEDs led, int velo)
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)3
+                Channel = (FourBitNumber)2
             });
         }
 
@@ -506,7 +506,7 @@ namespace LaunchpadNET
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)rightLEDnotes[y], (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)1
+                Channel = (FourBitNumber)0
             });
         }
 
@@ -514,7 +514,7 @@ namespace LaunchpadNET
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)1
+                Channel = (FourBitNumber)0
             });
         }
 
@@ -528,14 +528,14 @@ namespace LaunchpadNET
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)rightLEDnotes[y], (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)2
+                Channel = (FourBitNumber)1
             });
         }
         public void setSideLEDFlash(SideLEDs led, int velo)
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)2
+                Channel = (FourBitNumber)1
             });
         }
 
@@ -543,14 +543,14 @@ namespace LaunchpadNET
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)rightLEDnotes[y], (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)3
+                Channel = (FourBitNumber)2
             });
         }
         public void setSideLEDPulse(SideLEDs led, int velo)
         {
             targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)led, (SevenBitNumber)velo)
             {
-                Channel = (FourBitNumber)3
+                Channel = (FourBitNumber)2
             });
         }
 
@@ -626,7 +626,7 @@ namespace LaunchpadNET
             {
                 targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)notes[x, y], (SevenBitNumber)velo)
                 {
-                    Channel = (FourBitNumber)1
+                    Channel = (FourBitNumber)0
                 });
             }
             catch (Exception ex)
@@ -647,7 +647,7 @@ namespace LaunchpadNET
             {
                 targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)notes[x, y], (SevenBitNumber)velo)
                 {
-                    Channel = (FourBitNumber)2
+                    Channel = (FourBitNumber)1
                 });
             }
             catch (Exception ex)
@@ -662,7 +662,7 @@ namespace LaunchpadNET
             {
                 targetOutput.SendEvent(new NoteOnEvent((SevenBitNumber)(int)notes[x, y], (SevenBitNumber)velo)
                 {
-                    Channel = (FourBitNumber)3
+                    Channel = (FourBitNumber)2
                 });
             }
             catch (Exception ex)
